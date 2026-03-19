@@ -1,18 +1,24 @@
 package ru.smallcircle
 
-import java.util.ArrayDeque
+import java.util.PriorityQueue
 import java.util.Queue
-import kotlin.random.Random
+import kotlin.concurrent.thread
 
 class CoffeeQueue {
-    private val queue: Queue<Order> = ArrayDeque()
+    private val queue: Queue<Order> = PriorityQueue(Comparator{
+        o1, o2 -> o1.priority - o2.priority
+    })
     private val maxCapacity = 5
 
-    fun addOrder(drink: CoffeeType, name: String) {
+    private val isActive: Boolean
+        get() = queue.isNotEmpty()
+
+    fun addOrder(drink: CoffeeType, name: String, vip: Int = 0) {
         if (queue.size >= maxCapacity) {
             throw Exception("$name, простите, слишком много заказов. Попробуйте позже.")
         }
-        queue.offer(Order(name, drink))
+        queue.offer(Order(name, drink, vip))
+        if (queue.size == 1) start()
     }
 
     override fun toString(): String = buildString {
@@ -28,11 +34,23 @@ class CoffeeQueue {
         }
     }
 
+    private fun start(){
+        thread {
+            while (isActive) {
+                serveOrder()?.also {
+                    println("${it.clientName}, Ваш заказ готов. Заберите его по коду: ${it.code}")
+                }
+            }
+        }
+    }
+
     fun serveOrder(): Order? {
-        val order: Order? = queue.poll()
-        return order?.also{
+        val order: Order? = queue.peek()
+        return order?.let{
+            order.priority = Int.MAX_VALUE
             Thread.sleep(order.drink.prepareTime * 1_000)
             order.createOrderCode()
+            queue.poll()
         }
     }
 }
