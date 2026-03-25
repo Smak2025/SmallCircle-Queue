@@ -3,6 +3,7 @@ package ru.smallcircle
 import kotlin.random.Random
 
 data class Order(
+    val time: Long,
     val clientName: String,
     val drink: CoffeeType,
     var priority: Int = 0,

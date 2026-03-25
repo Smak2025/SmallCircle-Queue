@@ -1,12 +1,14 @@
 package ru.smallcircle
 
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.PriorityQueue
 import java.util.Queue
 import kotlin.concurrent.thread
 
 class CoffeeQueue {
     private val queue: Queue<Order> = PriorityQueue(Comparator{
-        o1, o2 -> o1.priority - o2.priority
+        o1, o2 -> if (o1.priority != o2.priority) o2.priority - o1.priority else (o1.time - o2.time).toInt()
     })
     private val maxCapacity = 5
 
@@ -17,7 +19,7 @@ class CoffeeQueue {
         if (queue.size >= maxCapacity) {
             throw Exception("$name, простите, слишком много заказов. Попробуйте позже.")
         }
-        queue.offer(Order(name, drink, vip))
+        queue.offer(Order(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC), name, drink, vip))
         if (queue.size == 1) start()
     }
 
